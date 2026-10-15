@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ПУП.02 Информатика (граф. дизайн) — Подходы к измерению информации</title>
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b24;
+    --surface-2: #1c2330;
+    --ink: #e7eef6;
+    --muted: #8ea0b6;
+    --mint: #34d399;
+    --mint-2: #63e6be;
+    --lime: #a3e635;
+    --teal: #2dd4bf;
+    --line: #26303f;
+    --ok: #4ade80;
+    --ok-soft: #12321f;
+    --bad: #f87171;
+    --bad-soft: #3a1717;
+    --warn: #fbbf24;
+    --brand: linear-gradient(135deg, #10b981 0%, #2dd4bf 55%, #34d399 100%);
+    --mark: #34d399;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.68 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+
+  .bg-anim { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+    background: radial-gradient(1100px 600px at 85% -8%, #123d2c 0%, #0e1117 55%); }
+  .bg-anim i { position:absolute; border-radius:50%; filter:blur(80px); opacity:.45; display:block; }
+  .bg-anim i.d1 { width:360px; height:360px; background:#0f766e; top:-120px; right:-90px; animation:drift 26s infinite ease-in-out; }
+  .bg-anim i.d2 { width:300px; height:300px; background:#14532d; bottom:-120px; left:-70px; animation:drift 28s infinite ease-in-out reverse; }
+  .bg-anim i.d3 { width:230px; height:230px; background:#155e75; top:50%; left:70%; animation:drift 30s infinite ease-in-out; }
+  @keyframes drift {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(42px,-32px) scale(1.05); }
+    66% { transform: translate(-36px,28px) scale(.96); }
+  }
+
+  main { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  header.top { padding: 2.2rem 0 1.3rem; border-bottom: 1px solid var(--line); margin-bottom: .4rem; }
+  header.top .course { display:inline-block; font-weight:600; font-size:.78rem; letter-spacing:.06em;
+    text-transform:uppercase; color:#05301f; background:var(--brand); padding:.28rem .7rem; border-radius:999px; margin-bottom:.75rem;}
+  header.top h1 { font-size: clamp(1.55rem, 3.4vw, 2.15rem); line-height:1.15; margin:0 0 .4rem; color:#fff; }
+  header.top .meta { color: var(--muted); font-size:.9rem; margin:0; }
+
+  .deck { position: relative; margin-top: 1.1rem; }
+  .slide { position:absolute; top:0; left:0; width:100%;
+    opacity:0; visibility:hidden; transform: translateY(16px);
+    transition: opacity .38s ease, transform .38s ease, visibility 0s linear .38s;
+    background:var(--surface); border:1px solid var(--line); border-radius:18px;
+    padding:2rem 2.2rem; box-shadow:0 14px 36px rgba(0,0,0,.4); }
+  .slide.active { position:relative; opacity:1; visibility:visible; transform:none;
+    transition: opacity .38s ease, transform .38s ease; }
+
+  .slide .kicker { font-size:.74rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--mint); margin:0 0 .35rem; display:flex; align-items:center; gap:.6rem; text-align:left; }
+  .slide .kicker::before { content:""; width:26px; height:5px; border-radius:3px; background:var(--brand); flex:none; }
+  .slide, .slide p, .slide li, .modal-body p, .modal-body li { text-align:justify; }
+  h2.st { font-size: clamp(1.3rem, 2.7vw, 1.65rem); line-height:1.25; margin:0 0 .6rem; color:#fff; text-align:left; }
+  .slide p.lead { color:var(--muted); margin:.2rem 0 .9rem; }
+
+  .slide.cover { background: var(--brand); border:none; overflow:hidden; }
+  .slide.cover::before, .slide.cover::after { content:""; position:absolute; border-radius:50%; filter:blur(46px); opacity:.4; z-index:0; }
+  .slide.cover::before { width:300px; height:300px; background:#0a5e80; top:-80px; right:-30px; }
+  .slide.cover::after { width:260px; height:260px; background:#f4f7fb; bottom:-90px; left:-60px; }
+  .slide.cover > * { position:relative; z-index:1; }
+  .slide.cover .kicker { color:#eafff5; opacity:.95; }
+  .slide.cover h2.st { color:#04281a; font-size: clamp(1.7rem, 4.2vw, 2.3rem); }
+  .slide.cover p.lead { color:rgba(4,40,26,.88); }
+  .tagrow { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.3rem; }
+  .cover .tagrow span { background:rgba(0,0,0,.18); border:1px solid rgba(4,40,26,.4);
+    padding:.28rem .7rem; border-radius:999px; font-size:.82rem; font-weight:600; color:#04301f; }
+  /* декоративные «биты» на обложке */
+  .bits { margin:1.5rem 0 0; display:flex; flex-wrap:wrap; gap:.45rem; }
+  .bits i { width:26px; height:26px; border-radius:7px; background:rgba(4,40,26,.35); border:1px solid rgba(4,40,26,.2); }
+  .bits i:nth-child(3n) { background:#0a5e80; }
+  .bits i:nth-child(3n+1) { background:#f4f7fb; box-shadow:0 3px 10px rgba(0,0,0,.18); }
+  .bits i:nth-child(4n) { border-radius:50%; }
+
+  .card { border:1px solid var(--line); border-radius:16px;
+    background:linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 60%);
+    padding:1.15rem 1.25rem 1.25rem; margin:.7rem 0; box-shadow:0 8px 22px rgba(0,0,0,.22);
+    position:relative; overflow:hidden; }
+  .card::after { content:""; position:absolute; top:-50px; right:-50px; width:120px; height:120px;
+    border-radius:50%; background:var(--mint); opacity:.06; pointer-events:none; }
+  .card .ttl { font-weight:700; color:var(--mint); margin:0 0 .5rem; font-size:1.05rem;
+    display:flex; align-items:center; gap:.55rem; }
+  .card .ttl::before { content:"◆"; font-size:.8rem; color:var(--lime); }
+  .card .rec { font-weight:700; color:var(--lime); margin:0 0 .4rem; font-size:.98rem;
+    display:flex; align-items:center; gap:.5rem; }
+  .card .rec::before { content:"✦"; color:var(--mint); }
+  .card p { margin:.32rem 0; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+  .grid2 .card { margin:0; }
+
+  ul.clean { margin:.35rem 0; padding:0; list-style:none; }
+  ul.clean li { margin:.38rem 0; padding-left:1.3rem; position:relative; }
+  ul.clean li::before { content:""; position:absolute; left:.15rem; top:.72em; width:9px; height:2px;
+    background:var(--mint); border-radius:2px; }
+  ol.steps { margin:.4rem 0; padding-left:1.3rem; counter-reset:st; list-style:none; }
+  ol.steps li { margin:.42rem 0; padding-left:2.1rem; position:relative; }
+  ol.steps li::before { counter-increment:st; content:counter(st); position:absolute; left:0; top:.05rem;
+    width:1.5rem; height:1.5rem; line-height:1.5rem; text-align:center; border-radius:50%;
+    background:var(--brand); color:#04281a; font-weight:600; font-size:.8rem; }
+
+  .pill { display:inline-block; font-family:ui-monospace,monospace; font-weight:600; color:var(--mint);
+    background:#10281f; border:1px solid #1f5c47; padding:.03rem .45rem; border-radius:6px; }
+  .formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background:#0c1118; border:1px solid var(--line); border-radius:10px;
+    padding:.8rem 1rem; margin:.55rem 0; font-size:.96rem; color:#d7e4f0; white-space:pre; }
+  .formula b { color:var(--mint); }
+  .sol { border:1px solid #1f5c47; background:linear-gradient(150deg,#123228 0%, #102027 100%);
+    border-radius:14px; padding:1rem 1.2rem; margin:.7rem 0; box-shadow:0 6px 18px rgba(0,0,0,.22);
+    position:relative; overflow:hidden; }
+  .sol::after { content:""; position:absolute; top:-40px; right:-40px; width:100px; height:100px; border-radius:50%;
+    background:var(--mint); opacity:.07; pointer-events:none; }
+  .sol label { font-weight:700; color:var(--mint); display:flex; align-items:center; gap:.5rem; margin-bottom:.4rem; }
+  .sol label::before { content:"✓"; color:var(--lime); font-weight:800; }
+  .sol .ans { display:block; background:#10281f; border:1px solid #1f5c47; border-radius:10px; padding:.6rem .85rem; margin-top:.55rem; font-weight:700; }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; margin:.55rem 0; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td { padding:.55rem .7rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { color:#bff5dc; font-weight:700; background:linear-gradient(180deg,#142b24 0%, #0f2019 100%); }
+  tr:last-child td { border-bottom:none; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.mono, .mono { font-family:ui-monospace,monospace; }
+  table.center th, table.center td { text-align:center; }
+  .scroll { overflow-x:auto; }
+  .note { font-size:.86rem; color:var(--muted); font-style:italic; margin:.45rem 0; }
+  .callout { background:linear-gradient(135deg,#142d24 0%, #0e1a24 70%); border:1px solid #1f5c47;
+    border-radius:14px; padding:1rem 1.2rem; margin:.7rem 0;
+    box-shadow:0 6px 18px rgba(0,0,0,.2); position:relative; }
+  .callout::before { content:"»"; position:absolute; top:.6rem; right:.9rem; font-size:1.4rem; color:var(--mint); opacity:.5; }
+  .callout b { color:var(--mint-2); }
+  .example { border:1px dashed #2f6f55; border-radius:14px; padding:.9rem 1.15rem; margin:.7rem 0;
+    background:linear-gradient(150deg,#0f1b18 0%, #111c26 100%); }
+  .example b { color:var(--mint); display:flex; align-items:center; gap:.5rem; }
+  .example b::before { content:"✎"; color:var(--lime); }
+  .example b { color:var(--mint); }
+
+  figure { margin:.6rem 0; border:1px solid var(--line); border-radius:14px; background:var(--surface-2); padding:1rem; }
+  figcaption { color:var(--muted); font-size:.82rem; text-align:center; margin-top:.7rem; }
+  .imgfit { max-width:86%; height:auto; display:block; margin:0 auto; border-radius:10px; }
+
+  .src { border:1px solid var(--line); border-radius:12px; padding:.1rem 1.05rem .5rem; margin:.7rem 0; background:var(--surface-2);}
+  .src h3 { font-size:.86rem; margin:.75rem 0 .3rem; color:var(--mint); text-transform:uppercase; letter-spacing:.05em;}
+  .src-btns { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:.35rem; }
+  .botao { display:inline-flex; align-items:center; gap:.45rem; padding:.5rem .85rem; border-radius:10px;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink); text-decoration:none; font-size:.86rem; font-weight:600;
+    transition: border-color .12s, background .12s, transform .12s; }
+  .botao::before { content:"↗"; color:var(--mint); font-weight:700; }
+  .botao:hover { border-color:var(--mint); background:#10281f; transform:translateY(-1px); }
+  .botao .bname { color:var(--mint); }
+  .botao .bdesc { color:var(--muted); font-weight:500; }
+
+  .pbar { height:6px; background:#1f2a38; border-radius:99px; overflow:hidden; margin:1.1rem 0 .6rem; }
+  #pfill { height:100%; width:0%; background:var(--brand); border-radius:99px; transition:width .35s ease; }
+  .nav { display:flex; align-items:center; gap:.6rem; margin-top:.5rem; }
+  .nav button { cursor:pointer; border-radius:10px; font:inherit; font-weight:600;
+    padding:.6rem 1.1rem; background:var(--surface); border:1px solid var(--line); color:var(--ink);
+    transition: transform .1s, background .12s; }
+  .nav button:hover:not(:disabled) { background:var(--surface-2); }
+  .nav button:disabled { opacity:.4; cursor:not-allowed; }
+  .nav .primary { background:var(--brand); color:#04281a; border:none; }
+  .dots { flex:1; display:flex; gap:4px; justify-content:center; min-width:0; overflow:hidden; }
+  .dot { width:5px; height:5px; flex:none; border-radius:50%; background:#33425a; border:none; padding:0;
+    cursor:pointer; transition: transform .12s, background .15s, width .12s; }
+  .dot:hover { background:var(--mint); }
+  .dot.active { background:var(--mint); transform:scale(1.3); width:9px; border-radius:99px; }
+  .counter { font-variant-numeric:tabular-nums; font-size:.85rem; color:var(--muted); font-weight:600; min-width:3.2rem; text-align:center; }
+
+  footer { color:var(--muted); font-size:.84rem; border-top:1px solid var(--line);
+    margin-top:2.4rem; padding-top:.9rem; }
+
+  .modal-overlay { position:fixed; inset:0; z-index:50; background:rgba(6,10,16,.7);
+    display:none; align-items:center; justify-content:center; padding:1.5rem; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    max-width:880px; width:100%; max-height:88vh; display:flex; flex-direction:column;
+    box-shadow:0 30px 70px rgba(0,0,0,.6); }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:1.05rem 1.4rem; border-bottom:1px solid var(--line); }
+  .modal-head h2 { margin:0; font-size:1.25rem; color:#fff; }
+  .modal-close { cursor:pointer; background:var(--surface-2); border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; width:38px; height:38px; font-size:1.3rem; line-height:1; }
+  .modal-close:hover { background:var(--bad-soft); color:var(--bad); }
+  .modal-body { overflow-y:auto; padding:1.2rem 1.5rem 1.6rem; }
+  .modal-body p { margin:.45rem 0; color:var(--ink); }
+  .modal-body li { margin:.3rem 0; color:var(--ink); }
+  .qz-intro { font-size:.95rem; color:var(--muted); margin:0 0 1rem; }
+
+  .qz { border:1px solid var(--line); border-radius:14px; padding:1.05rem 1.2rem; margin:1rem 0; background:var(--surface-2); }
+  .qz .ztype { display:inline-block; font-size:.74rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--mint); border:1px solid #1f5c47; background:#10281f; border-radius:999px; padding:.12rem .6rem; margin-bottom:.5rem; }
+  .qz .zq { font-weight:600; margin:.2rem 0 .6rem; color:#fff; }
+  .qz .zopt { display:block; width:100%; text-align:left; cursor:pointer; border:1.5px solid var(--line);
+    background:var(--surface); border-radius:9px; padding:.6rem .85rem; margin:.42rem 0; font:inherit; color:var(--ink);
+    transition: border-color .12s, background .12s, transform .1s; }
+  .qz .zopt:hover:not(:disabled) { border-color:var(--mint); transform:translateX(3px); }
+  .qz .zopt:disabled { cursor:default; transform:none; }
+  .qz .zopt .l { font-weight:700; color:var(--muted); margin-right:.5rem; }
+  .qz .zopt:nth-of-type(1) { background:#14302a; border-color:#1f5c47; }
+  .qz .zopt:nth-of-type(1) .l { color:#63e6be; }
+  .qz .zopt:nth-of-type(2) { background:#11263a; border-color:#245784; }
+  .qz .zopt:nth-of-type(2) .l { color:#5aa6e0; }
+  .qz .zopt:nth-of-type(3) { background:#18311c; border-color:#2f5f35; }
+  .qz .zopt:nth-of-type(3) .l { color:#86e089; }
+  .qz .zopt:nth-of-type(4) { background:#332a16; border-color:#6b5620; }
+  .qz .zopt:nth-of-type(4) .l { color:#e0b35a; }
+  .qz .zopt:nth-of-type(5) { background:#251c38; border-color:#4d3f74; }
+  .qz .zopt:nth-of-type(5) .l { color:#a18adb; }
+  .qz .zopt:nth-of-type(6) { background:#0f2b30; border-color:#1d4f59; }
+  .qz .zopt:nth-of-type(6) .l { color:#5fc7d8; }
+  .qz .zopt.right { border-color:var(--ok); background:var(--ok-soft); }
+  .qz .zopt.wrong { border-color:var(--bad); background:var(--bad-soft); }
+  .qz .znum { display:flex; gap:.6rem; align-items:center; margin:.4rem 0; }
+  .qz .znum input { font:inherit; color:var(--ink); background:var(--surface);
+    border:1.5px solid var(--line); border-radius:9px; padding:.6rem .9rem; width:190px; }
+  .qz .znum input:focus { outline:none; border-color:var(--mint); }
+  .qz .znum input::placeholder { color:var(--muted); opacity:.7; }
+  .qz .zbtn { cursor:pointer; background:var(--brand); color:#04281a; border:none; font:inherit;
+    font-weight:700; padding:.6rem 1.2rem; border-radius:9px; }
+  .qz .zbtn:hover { filter:brightness(1.08); }
+  .qz .zexpl { display:none; margin:.6rem 0 0; padding:.7rem .9rem; border-radius:9px; font-size:.92rem; }
+  .qz .zexpl.show { display:block; }
+  .qz .zexpl.ok { background:var(--ok-soft); border:1px solid #3f8f63; }
+  .qz .zexpl.bad { background:var(--bad-soft); border:1px solid #a45858; }
+  .qz .zexpl .head { font-weight:800; margin-bottom:.2rem; }
+  .qz .zexpl.ok .head { color:var(--ok); }
+  .qz .zexpl.bad .head { color:var(--bad); }
+  .qz .zscore { font-weight:700; color:var(--mint); margin-top:.1rem; }
+
+  .btn-open { cursor:pointer; background:var(--brand); color:#04281a; border:none; font:inherit; font-weight:700;
+    padding:.8rem 1.7rem; font-size:1.02rem; border-radius:11px; box-shadow:0 6px 18px rgba(16,185,129,.3);
+    transition: transform .12s, box-shadow .12s, filter .12s; }
+  .btn-open:hover { transform:translateY(-2px); filter:brightness(1.08); box-shadow:0 10px 24px rgba(16,185,129,.45); }
+
+/* interactive tasks */
+  .sort-wrap { margin:.6rem 0; }
+  .sort-pool { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.7rem; }
+  .sort-pool .card { cursor:pointer; flex:0 1 auto; min-width:150px; text-align:center; font-weight:600; transition:border-color .12s, background .12s; }
+  .sort-pool .card.sel { outline:3px solid var(--mint); outline-offset:1px; }
+  .sort-targets { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+  .sort-col h4 { text-align:center; margin:0 0 .4rem; color:var(--mint); }
+  .dropzone { min-height:90px; border:2px dashed var(--line); border-radius:12px; background:var(--surface-2); padding:.4rem; display:flex; flex-direction:column; gap:.4rem; }
+  .error { border-color:var(--bad) !important; background:var(--bad-soft) !important; }
+  .sort-pool .card:nth-child(1), .match-wrap .card:nth-child(1) { background:#f0faf5; border-color:#9fd7bd; }
+  .sort-pool .card:nth-child(2), .match-wrap .card:nth-child(2) { background:#f0f6fd; border-color:#a9cce8; }
+  .sort-pool .card:nth-child(3), .match-wrap .card:nth-child(3) { background:#f1f9ef; border-color:#b4d8ae; }
+  .sort-pool .card:nth-child(4), .match-wrap .card:nth-child(4) { background:#fdf6e9; border-color:#e6cd9b; }
+  .sort-pool .card:nth-child(5), .match-wrap .card:nth-child(5) { background:#f3effb; border-color:#c8b9e8; }
+  .sort-pool .card:nth-child(6), .match-wrap .card:nth-child(6) { background:#edf8fb; border-color:#a8d4e0; }
+  .match-wrap { display:flex; flex-wrap:wrap; gap:.6rem; margin:.6rem 0; }
+  .match-wrap .card { cursor:pointer; margin:0; font-weight:600; border:1px solid var(--line); }
+  .seq { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:.6rem 0; }
+  .seq-pool { display:flex; flex-wrap:wrap; gap:.5rem; align-content:flex-start;
+    border:2px dashed var(--line); border-radius:12px; background:rgba(255,255,255,.04); padding:.6rem; }
+  .seq-board { border:2px dashed var(--line); border-radius:12px; background:rgba(255,255,255,.05); padding:.7rem; }
+  .seq-board h4 { margin:0 0 .4rem; color:var(--mint); text-align:center; }
+  .seq-built { display:flex; flex-direction:column; gap:.4rem; min-height:60px; }
+  .seq .card { cursor:pointer; margin:0; font-weight:700; min-width:170px; text-align:center;
+    display:inline-block; padding:.55rem .8rem; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface); color:#0b2b22; }
+  .seq .card:hover { border-color:var(--mint); }
+  .seq-chip { position:relative; }
+  .seq-actions { display:flex; gap:.6rem; margin:.6rem 0; }
+  .seq-btn { cursor:pointer; background:var(--brand); color:#04281a; border:none; font:inherit; font-weight:700; padding:.6rem 1.3rem; border-radius:10px; }
+  .seq-btn:hover { filter:brightness(1.07); }
+  .seq-btn2 { cursor:pointer; background:var(--surface); border:1px solid var(--line); color:var(--ink); font:inherit; font-weight:600; padding:.6rem 1.3rem; border-radius:10px; }
+  .seq .card:nth-child(1), .seq-built .seq-chip:nth-child(1) { background:#f0faf5; border-color:#9fd7bd; color:#0f3a2e; }
+  .seq .card:nth-child(2), .seq-built .seq-chip:nth-child(2) { background:#f0f6fd; border-color:#a9cce8; color:#12365c; }
+  .seq .card:nth-child(3), .seq-built .seq-chip:nth-child(3) { background:#f1f9ef; border-color:#b4d8ae; color:#1e3d1c; }
+  .seq .card:nth-child(4), .seq-built .seq-chip:nth-child(4) { background:#fdf6e9; border-color:#e6cd9b; color:#5b4110; }
+  .seq .card:nth-child(5), .seq-built .seq-chip:nth-child(5) { background:#f3effb; border-color:#c8b9e8; color:#3a2a63; }
+  .seq .card:nth-child(6), .seq-built .seq-chip:nth-child(6) { background:#edf8fb; border-color:#a8d4e0; color:#0e3a46; }
+  .seq .card:nth-child(7), .seq-built .seq-chip:nth-child(7) { background:#fbf1e8; border-color:#e0bea0; color:#553017; }
+
+  @media (max-width: 640px){
+    .grid2, .seq { grid-template-columns:1fr; }
+    .slide { padding:1.3rem 1.1rem; }
+    .dots { display:none; }
+  }
+  @media print {
+    body { background:#fff; }
+    .bg-anim, .nav, .pbar { display:none; }
+    .slide { position:static !important; opacity:1 !important; visibility:visible !important;
+      transform:none !important; break-inside:avoid; background:#fff; color:#111; border:1px solid #ccc; margin:0 0 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-anim"><i class="d1"></i><i class="d2"></i><i class="d3"></i></div>
+<main>
+  <header class="top">
+    <span class="course">ПУП.02 · Информатика (группа «Графический дизайн»)</span>
+    <h1>Подходы к измерению информации для дизайнера</h1>
+    <p class="meta">Тема 1.2 · 4 академических часа · практическое занятие · очная форма. Содержательный, алфавитный и вероятностный подходы, единицы измерения, дискретное представление, хранение/передача и архивирование. Все расчёты показаны на примерах из практики графического дизайна; тест — в модальном окне.</p>
+  </header>
+
+  <div class="deck" id="deck">
+
+    <article class="slide cover active">
+      <p class="kicker">Тема · Измерение информации</p>
+      <h2 class="st">Как «взвесить» цифровую информацию дизайнеру</h2>
+      <p class="lead">Дизайнеру важно понимать, сколько места занимают макеты, фотографии и видео, чтобы выбирать форматы, размеры и способы сжатия. В этой теме вы научитесь измерять информацию, переводить единицы и оценивать объёмы файлов — от простого текста до растровых изображений.</p>
+      <div class="bits" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="tagrow">
+        <span>Содержательный подход</span><span>Алфавитный подход</span><span>Вероятностный подход</span><span>Единицы</span><span>Архивирование</span><span>Дизайн-примеры</span>
+      </div>
+    </article>
+
+    <!-- Раздел 1. Подходы -->
+    <article class="slide">
+      <p class="kicker">Раздел 1 · Подходы</p>
+      <h2 class="st">Три подхода к измерению информации</h2>
+      <p class="lead">Информацию можно оценивать по-разному в зависимости от интересующего критерия.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Подход</th><th>Что измеряет</th><th>Основная идея</th></tr></thead>
+        <tbody>
+          <tr><td><b>Содержательный</b></td><td>смысловую «полезность» сообщения</td><td>чем неожиданнее сообщение, тем больше информации</td></tr>
+          <tr><td><b>Алфавитный</b></td><td>объём данных в символах</td><td>объём зависит от мощности алфавита и числа символов</td></tr>
+          <tr><td><b>Вероятностный</b></td><td>информацию о событии</td><td>количество информации определяется числом равновозможных исходов</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><b>Связь подходов:</b> содержательный и вероятностный используют соотношение N = 2<sup>i</sup> (число вариантов и биты), а алфавитный — для расчёта объёма файлов. Для дизайнера ключевой — алфавитный подход, так как именно он даёт «вес» файла.</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 1 · Задачи</p>
+      <h2 class="st">Задачи на подходы (3 задачи с разбором)</h2>
+      <div class="card"><p class="ttl">Совет</p>
+        <p>Во всех задачах применяйте соотношение N = 2<sup>i</sup> и подбор степени двойки. Логарифмы не используются.</p>
+      </div>
+
+      <div class="card"><p class="ttl">Задача 1. Сколько событий?</p>
+        <p><b>Условие:</b> дизайнеру на выбор предложили 4 цветовые схемы для логотипа. Сколько бит информации несёт сообщение о выборе одной конкретной схемы?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> N = 4 равновозможных варианта.</p>
+          <p><b>Найти:</b> i (бит).</p>
+          <p><b>Решение:</b> применяем N = 2<sup>i</sup>. Подбираем степень: 4 = 2<sup>2</sup>, значит i = 2.</p>
+          <span class="ans">Ответ: 2 бита.</span>
+        </div>
+      </div>
+
+      <div class="card"><p class="ttl">Задача 2. Сколько бит в сообщении?</p>
+        <p><b>Условие:</b> на студии 6 разных макетов вёрстки, все равновозможны. Сколько бит несёт сообщение о выборе одного макета?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> N = 6 вариантов.</p>
+          <p><b>Найти:</b> i (бит).</p>
+          <p><b>Решение:</b> N = 2<sup>i</sup>. Ближайшая степень двойки, не меньшая 6, — это 8 = 2<sup>3</sup>. Значит i = 3.</p>
+          <span class="ans">Ответ: 3 бита.</span>
+        </div>
+      </div>
+
+      <div class="card"><p class="ttl">Задача 3. Сколько вариантов палитры?</p>
+        <p><b>Условие:</b> сообщение о выборе цвета из палитры несёт 4 бита. Сколько цветов в палитре (все равновозможны)?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> i = 4 бита.</p>
+          <p><b>Найти:</b> N.</p>
+          <p><b>Решение:</b> N = 2<sup>i</sup> = 2<sup>4</sup> = 16.</p>
+          <span class="ans">Ответ: 16 цветов.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Раздел 2. Единицы -->
+    <article class="slide">
+      <p class="kicker">Раздел 2 · Единицы</p>
+      <h2 class="st">Единицы измерения информации</h2>
+      <p class="lead">Бит — минимальная единица; дальнейшие единицы кратны 1024 (2<sup>10</sup>) из-за двоичной природы компьютера.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Единица</th><th>Обозначение</th><th>Соотношение</th></tr></thead>
+        <tbody>
+          <tr><td>Бит</td><td>бит</td><td>наименьшая</td></tr>
+          <tr><td>Байт</td><td>байт</td><td>1 байт = 8 бит</td></tr>
+          <tr><td>Килобайт</td><td>Кбайт</td><td>1 Кбайт = 1024 байт</td></tr>
+          <tr><td>Мегабайт</td><td>Мбайт</td><td>1 Мбайт = 1024 Кбайт</td></tr>
+          <tr><td>Гигабайт</td><td>Гбайт</td><td>1 Гбайт = 1024 Мбайт</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><b>Правила перевода:</b> в «младшие» единицы — умножаем (на 8 при переходе бит↔байт, на 1024 между байтами и выше); в «старшие» — делим.</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 2 · Задачи</p>
+      <h2 class="st">Задачи на единицы измерения (3 задачи)</h2>
+      <div class="card"><p class="ttl">Задача 1. Биты в байты</p>
+        <p><b>Условие:</b> выразите 2048 бит в байтах и в килобайтах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> 2048 бит.</p>
+          <p><b>Найти:</b> сколько это байт и Кбайт.</p>
+          <p><b>Решение:</b> байт = 2048 ÷ 8 = 256 байт. Кбайт = 256 ÷ 1024 = 0,25 Кбайт.</p>
+          <span class="ans">Ответ: 256 байт = 0,25 Кбайт.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 2. Кбайты в байты</p>
+        <p><b>Условие:</b> определите число байт в 3 Кбайтах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> 3 Кбайт.</p>
+          <p><b>Найти:</b> байты.</p>
+          <p><b>Решение:</b> 3 · 1024 = 3072 байта.</p>
+          <span class="ans">Ответ: 3072 байта.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 3. Мбайты в Кбайты</p>
+        <p><b>Условие:</b> переведите 5 Мбайт в Кбайты.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> 5 Мбайт.</p>
+          <p><b>Найти:</b> Кбайты.</p>
+          <p><b>Решение:</b> 5 · 1024 = 5120 Кбайт.</p>
+          <span class="ans">Ответ: 5120 Кбайт.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Раздел 3. Дискретное представление -->
+    <article class="slide">
+      <p class="kicker">Раздел 3 · Представление</p>
+      <h2 class="st">Универсальность дискретного представления информации</h2>
+      <p class="lead">Компьютер хранит любые данные — текст, изображение, звук — в дискретном виде: как последовательности нулей и единиц.</p>
+      <div class="card"><p class="ttl">Что это значит для дизайнера</p>
+        <p>Любая картинка оцифровывается на пиксели, каждый пиксель получает цвет, закодированный числом бит (глубина цвета). Звук разбивается на отсчёты. Чем больше пикселей и больше бит на пиксель, тем точнее изображение и тем больше файл.</p>
+      </div>
+      <div class="callout"><b>Формулы для дизайнера:</b> объём графики = (ширина × высота) × глубина цвета (бит). Глубина цвета i связана с числом цветов N соотношением N = 2<sup>i</sup>.</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 3 · Задачи</p>
+      <h2 class="st">Задачи на графику (3 задачи)</h2>
+      <div class="card"><p class="ttl">Задача 1. Чёрно-белый макет</p>
+        <p><b>Условие:</b> растровая иконка размером 128×128 пикселей хранится в 2 цветах (ч/б). Найдите объём в битах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> 128×128, N = 2 цвета.</p>
+          <p><b>Найти:</b> объём.</p>
+          <p><b>Решение:</b> глубина = 1 бит (2 = 2<sup>1</sup>). Пикселей 128·128 = 16 384. Объём = 16 384 · 1 = 16 384 бит.</p>
+          <span class="ans">Ответ: 16 384 бит.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 2. Изображение в 64 цвета</p>
+        <p><b>Условие:</b> баннер 400×200 пикселей в палитре из 64 цветов. Найдите объём в байтах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> 400×200, N = 64.</p>
+          <p><b>Найти:</b> объём в байтах.</p>
+          <p><b>Решение:</b> глубина = 6 бит (64 = 2<sup>6</sup>). Пикселей 400·200 = 80 000. Объём = 80 000 · 6 = 480 000 бит = 60 000 байт.</p>
+          <span class="ans">Ответ: 60 000 байт.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 3. Палитра 256 цветов</p>
+        <p><b>Условие:</b> постер 1024×768 в 256 цветов. Найти объём в Кбайтах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> 1024×768, N = 256.</p>
+          <p><b>Найти:</b> объём в Кбайтах.</p>
+          <p><b>Решение:</b> глубина = 8 бит. Пикселей 1024·768 = 786 432. Объём = 786 432 · 8 = 6 291 456 бит = 786 432 байт = 768 Кбайт.</p>
+          <span class="ans">Ответ: 768 Кбайт.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Раздел 4. Текст -->
+    <article class="slide">
+      <p class="kicker">Раздел 4 · Текстовый объём</p>
+      <h2 class="st">Информационный объём текстового файла</h2>
+      <p class="lead">Алфавитный подход применяется для расчёта объёма текста: каждый символ имеет информационный вес.</p>
+      <div class="callout"><b>Формула:</b> V = K · i, где K — число символов, i — вес одного символа (бит).</div>
+      <div class="card"><p class="ttl">Удобный случай</p>
+        <p>При алфавите из 256 символов каждый символ весит 1 байт (8 бит). Тогда объём текста в байтах равен числу символов.</p>
+      </div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 4 · Задачи</p>
+      <h2 class="st">Задачи на текстовый объём (3 задачи)</h2>
+      <div class="card"><p class="ttl">Задача 1. Алфавит 32</p>
+        <p><b>Условие:</b> слоган дизайнера «MIND THE GAP» содержит 12 символов. Алфавит мощностью 32. Найдите объём в битах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> K = 12, N = 32.</p>
+          <p><b>Найти:</b> объём.</p>
+          <p><b>Решение:</b> вес символа 5 бит (32 = 2<sup>5</sup>). V = 12 · 5 = 60 бит.</p>
+          <span class="ans">Ответ: 60 бит.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 2. Алфавит 256</p>
+        <p><b>Условие:</b> заметка из 240 символов набрана в кодировке с алфавитом 256. Найдите объём в байтах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> K = 240, N = 256.</p>
+          <p><b>Найти:</b> объём в байтах.</p>
+          <p><b>Решение:</b> вес символа 1 байт (8 бит). V = 240 · 1 = 240 байт.</p>
+          <span class="ans">Ответ: 240 байт.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 3. Читаем вес</p>
+        <p><b>Условие:</b> сообщение из 50 символов занимает 300 бит. Чему равен вес одного символа?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> K = 50, V = 300 бит.</p>
+          <p><b>Найти:</b> i.</p>
+          <p><b>Решение:</b> i = V ÷ K = 300 ÷ 50 = 6 бит.</p>
+          <span class="ans">Ответ: 6 бит.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Раздел 5. Носители -->
+    <article class="slide">
+      <p class="kicker">Раздел 5 · Носители</p>
+      <h2 class="st">Определение объёмов носителей и хранение</h2>
+      <p class="lead">Носители (флешки, диски, облако) хранят заданный объём данных; умение считать их вместимость важно при сдаче проектов.</p>
+      <div class="card"><p class="ttl">Алгоритм</p>
+        <p>Привести ёмкость носителя и объём объекта к одной единице, затем разделить ёмкость на объём объекта.</p>
+      </div>
+      <div class="callout"><b>Формула:</b> число объектов = ёмкость носителя ÷ объём объекта.</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 5 · Задачи</p>
+      <h2 class="st">Задачи на носители (3 задачи)</h2>
+      <div class="card"><p class="ttl">Задача 1. Постеры на флешке</p>
+        <p><b>Условие:</b> сколько файлов по 2 Мбайта поместится на флешку 512 Мбайт?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> ёмкость 512 Мбайт, файл 2 Мбайта.</p>
+          <p><b>Найти:</b> число файлов.</p>
+          <p><b>Решение:</b> 512 ÷ 2 = 256.</p>
+          <span class="ans">Ответ: 256 файлов.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 2. Фото на диске</p>
+        <p><b>Условие:</b> сколько фотографий по 4 Мбайта поместится на диск 2 Гбайта?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> ёмкость 2 Гбайт, фото 4 Мбайта.</p>
+          <p><b>Найти:</b> число фото.</p>
+          <p><b>Решение:</b> 2 Гбайт = 2048 Мбайт. 2048 ÷ 4 = 512.</p>
+          <span class="ans">Ответ: 512 фотографий.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 3. Проект на диске</p>
+        <p><b>Условие:</b> облако предоставляет 10 Гбайт. Проект из 16 макетов, каждый по 512 Мбайт. Поместится ли?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> облако 10 Гбайт = 10 240 Мбайт, макет 512 Мбайт, 16 макетов.</p>
+          <p><b>Найти:</b> общий объём и поместится ли.</p>
+          <p><b>Решение:</b> 16 · 512 = 8192 Мбайт. 8192 < 10 240 — да, помещается.</p>
+          <span class="ans">Ответ: 8192 Мбайт — помещается.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Раздел 6. Передача -->
+    <article class="slide">
+      <p class="kicker">Раздел 6 · Передача</p>
+      <h2 class="st">Передача информации по каналу связи</h2>
+      <p class="lead">При сдаче макетов онлайн важно уметь оценить время загрузки файла.</p>
+      <div class="callout"><b>Формула:</b> T = V ÷ v, где T — время (с), V — объём (бит), v — скорость (бит/с).</div>
+      <div class="card"><p class="ttl">Внимание к единицам</p>
+        <p>Если объём дан в байтах, а скорость в бит/с, объём обязательно переводим в биты (умножаем на 8).</p>
+      </div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 6 · Задачи</p>
+      <h2 class="st">Задачи на передачу данных (3 задачи)</h2>
+      <div class="card"><p class="ttl">Задача 1. Время загрузки</p>
+        <p><b>Условие:</b> файл 4 Мбайта загружается со скоростью 2 Мбит/с. Найдите время в секундах.</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> V = 4 Мбайт, v = 2 Мбит/с.</p>
+          <p><b>Найти:</b> T.</p>
+          <p><b>Решение:</b> 4 Мбайт = 32 Мбит. T = 32 ÷ 2 = 16 с.</p>
+          <span class="ans">Ответ: 16 секунд.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 2. Скорость канала</p>
+        <p><b>Условие:</b> файл 80 Мбит передан за 10 секунд. Какова скорость канала в Мбит/с?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> V = 80 Мбит, T = 10 с.</p>
+          <p><b>Найти:</b> v.</p>
+          <p><b>Решение:</b> v = V ÷ T = 80 ÷ 10 = 8 Мбит/с.</p>
+          <span class="ans">Ответ: 8 Мбит/с.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 3. Объём за время</p>
+        <p><b>Условие:</b> сколько Мбайт можно передать за 8 секунд по каналу 8 Мбит/с?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> T = 8 с, v = 8 Мбит/с.</p>
+          <p><b>Найти:</b> V в Мбайтах.</p>
+          <p><b>Решение:</b> V = 8 · 8 = 64 Мбит = 8 Мбайт.</p>
+          <span class="ans">Ответ: 8 Мбайт.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Раздел 7. Архивация -->
+    <article class="slide">
+      <p class="kicker">Раздел 7 · Архивация</p>
+      <h2 class="st">Архивирование информации</h2>
+      <p class="lead">Архивация уменьшает объём файлов, что важно для экономии места и ускорения передачи проектов.</p>
+      <div class="card"><p class="ttl">Сущность</p>
+        <p>Архиватор (ZIP, RAR, 7-Zip) устраняет избыточность данных. Избыточные по структуре данные (текст, офисные документы) сжимаются хорошо, а уже сжатые форматы (JPEG, MP3) почти не уменьшаются.</p>
+      </div>
+      <div class="callout"><b>Формула:</b> объём архива = исходный объём × доля, оставшаяся после сжатия.</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Раздел 7 · Задачи</p>
+      <h2 class="st">Задачи на архивацию (3 задачи)</h2>
+      <div class="card"><p class="ttl">Задача 1. Уменьшение на процент</p>
+        <p><b>Условие:</b> макет 8 Мбайт сжали на 75%. Каков объём архива?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> исходный 8 Мбайт, осталось 25%.</p>
+          <p><b>Найти:</b> объём архива.</p>
+          <p><b>Решение:</b> 8 · 0,25 = 2 Мбайта.</p>
+          <span class="ans">Ответ: 2 Мбайта.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 2. Во сколько раз</p>
+        <p><b>Условие:</b> файл 10 Мбайт после архивации стал 2 Мбайта. Во сколько раз уменьшился?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> было 10 Мбайт, стало 2 Мбайта.</p>
+          <p><b>Найти:</b> во сколько раз.</p>
+          <p><b>Решение:</b> 10 ÷ 2 = 5 раз.</p>
+          <span class="ans">Ответ: в 5 раз.</span>
+        </div>
+      </div>
+      <div class="card"><p class="ttl">Задача 3. Доля после сжатия</p>
+        <p><b>Условие:</b> PDF 50 Мбайт сжали до 10 Мбайт. Сколько процентов исходного объёма осталось?</p>
+        <div class="sol"><label>Решение</label>
+          <p><b>Дано:</b> было 50 Мбайт, стало 10 Мбайт.</p>
+          <p><b>Найти:</b> долю в %.</p>
+          <p><b>Решение:</b> 10 ÷ 50 = 0,2 = 20%.</p>
+          <span class="ans">Ответ: 20%.</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Проверка знаний -->
+    <article class="slide">
+      <p class="kicker">Интерактив</p>
+      <h2 class="st">Сортировка: единицы измерения по возрастанию</h2>
+      <p class="lead">Расставьте единицы измерения от младшей к старшей. Щёлкните единицу слева, затем щёлкните в поле сборки справа, чтобы разместить её; для отмены щёлкните размещённую единицу.</p>
+      <div class="seq">
+        <div class="seq-pool" id="unitPool"></div>
+        <div class="seq-board"><h4>Поле для сборки</h4><div class="seq-built" id="unitBuilt"></div></div>
+      </div>
+      <div class="seq-actions">
+        <button id="unitCheck" class="seq-btn">Проверить</button>
+        <button id="unitReset" class="seq-btn2">Сбросить</button>
+      </div>
+      <p class="note" id="unitMsg"></p>
+      <div class="callout"><b>Подсказка:</b> единицы следует расположить от младшей к старшей. Проверка правильности выполняется кнопкой «Проверить».</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Домашнее задание</p>
+      <h2 class="st">Практическое задание по теме</h2>
+      <p class="lead">Выполнить расчёт информационного объёма и оформить отчёт.</p>
+      <div class="card"><p class="ttl">Задание (что сделать)</p>
+        <ol class="steps">
+          <li>Определить информационный объём текстового файла: файл содержит 4 страницы по 30 строк по 50 символов, алфавит 256. Найти объём в байтах.</li>
+          <li>Определить объём графического файла: растровый макет 1280×1024, 16 777 216 цветов (24 бита). Найти объём в Мбайтах.</li>
+          <li>Перевести значения между единицами: 4096 бит → байты → Кбайты; 3 Мбайта → Кбайты.</li>
+          <li>Рассчитать объём исходного и заархивированного файла: текстовый файл 600 Кбайт сжали на 90%. Найти объём архива в Кбайтах и во сколько раз уменьшился файл.</li>
+        </ol>
+      </div>
+      <div class="card"><p class="ttl">Как оформить</p>
+        <ul class="clean">
+          <li>Оформить в текстовом документе: ФИО, группа, номер работы, дата.</li>
+          <li>Каждую задачу решить по схеме «Дано — Найти — Решение — Ответ».</li>
+          <li>Шрифт Times New Roman 14 пт, полуторный интервал; соблюдать академический стиль.</li>
+        </ul>
+      </div>
+      <div class="card"><p class="ttl">Как сдать (дистанционно)</p>
+        <ul class="clean">
+          <li>Сохранить в формате .docx (издатель Systems MS Office) и, при необходимости, .pdf.</li>
+          <li>Отправить файл в указанную вкладку сдачи на учебной платформе до установленного срока; в сообщении указать ФИО, группу и тему работы.</li>
+          <li>Проверить корректность отображения таблиц и формул перед отправкой.</li>
+        </ul>
+      </div>
+      <div class="src"><h3>Источники по задачам ЕГЭ</h3>
+        <div class="src-btns">
+          <a class="botao" href="https://inf-ege.sdamgia.ru/prob_catalog" target="_blank" rel="noopener"><span class="bname">Решу ЕГЭ</span><span class="bdesc">— каталог заданий ЕГЭ</span></a>
+          <a class="botao" href="https://ege.sdamgia.ru" target="_blank" rel="noopener"><span class="bname">СДАМ ГИА</span><span class="bdesc">— тренажёры и разборы</span></a>
+          <a class="botao" href="https://ege.fipi.ru/bank" target="_blank" rel="noopener"><span class="bname">ФИПИ</span><span class="bdesc">— официальный банк заданий</span></a>
+        </div>
+      </div>
+      <div class="example"><b>Где применяется в дизайне.</b> Умение считать информационный объём помогает дизайнеру оценить «вес» итоговых файлов для сайта, подобрать формат (PNG/JPEG/WebP) и размер макета под загрузку, рассчитать время передачи больших материалов заказчику и спланировать резервное копирование портфолио.</div>
+    </article>
+
+    <article class="slide">
+      <p class="kicker">Завершение</p>
+      <h2 class="st">Итоги и тест для самопроверки</h2>
+      <p class="lead">Вы изучили три подхода к измерению информации, единицы измерения, дискретное представление, расчёт объёмов текстовых и графических файлов, вместимость носителей, передачу и архивацию. Для закрепления выполните тест для самопроверки.</p>
+      <div class="card">
+        <p class="ttl">Ключевые формулы</p>
+        <ul class="clean">
+          <li><b>N = 2<sup>i</sup></b> — число вариантов и количество информации.</li>
+          <li><b>V = K · i</b> — объём текстового файла.</li>
+          <li><b>Объём графики = пиксели · глубина цвета</b>.</li>
+          <li><b>1 байт = 8 бит</b>; 1 Кбайт = 1024 байта; 1 Мбайт = 1024 Кбайта.</li>
+          <li><b>T = V ÷ v</b> — время передачи.</li>
+          <li><b>Объём архива = исходный объём × доля</b>.</li>
+        </ul>
+      </div>
+      <div style="margin-top:1.2rem; text-align:center;">
+        <button id="openModal" class="btn-open">Пройти тест для самопроверки</button>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="pbar"><div id="pfill"></div></div>
+  <div class="nav">
+    <button id="prev" disabled>← Назад</button>
+    <div class="dots" id="dots"></div>
+    <span class="counter" id="counter">1</span>
+    <button id="next" class="primary">Далее →</button>
+  </div>
+
+  <footer>
+    <b>ПУП.02 Информатика (группа «Графический дизайн»)</b> · Тема 1.2: Подходы к измерению информации. Материал для самостоятельной подготовки; рекомендуемые источники приведены в тексте. Сформировано 30.09.2026.
+  </footer>
+</main>
+
+<!-- ============ Modal ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">Тест для самопроверки</h2>
+      <button class="modal-close" id="modalClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="qz-intro">Вопросы по всем разделам темы: выбор одного варианта, «верно/неверно», выбор нескольких, числовой ответ.</p>
+
+      <div class="qz"><span class="ztype">Выбор одного варианта</span>
+        <p class="zq">Вопрос 1. Сколько бит в одном байте?</p>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">А.</span>2</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">Б.</span>16</button>
+        <button class="zopt" data-ok="true" onclick="qzSingle(this)"><span class="l">В.</span>8</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">Г.</span>1024</button>
+        <div class="zexpl"><p class="head">Пояснение</p><p>1 байт = 8 бит.</p></div>
+      </div>
+
+      <div class="qz"><span class="ztype">Выбор одного варианта</span>
+        <p class="zq">Вопрос 2. Сколько в 1 Кбайте байт?</p>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">А.</span>1000</button>
+        <button class="zopt" data-ok="true" onclick="qzSingle(this)"><span class="l">Б.</span>1024</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">В.</span>8</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">Г.</span>2048</button>
+        <div class="zexpl"><p class="head">Пояснение</p><p>1 Кбайт = 1024 байта = 2<sup>10</sup> байт.</p></div>
+      </div>
+
+      <div class="qz"><span class="ztype">Числовой ответ</span>
+        <p class="zq">Вопрос 3. Сообщение несёт 3 бита. Сколько равновозможных событий привело к его появлению? (число)</p>
+        <div class="znum"><input type="text" id="qzNum1"placeholder="N = …"><button class="zbtn" onclick="qzNumAnswer(1,8)">Проверить</button></div>
+        <div class="zexpl"><p class="head">Пояснение</p><p>N = 2<sup>3</sup> = 8.</p></div>
+      </div>
+
+      <div class="qz"><span class="ztype">Выбор одного варианта</span>
+        <p class="zq">Вопрос 4. Какой подход применяют для расчёта объёма графического файла?</p>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">А.</span>Содержательный</button>
+        <button class="zopt" data-ok="true" onclick="qzSingle(this)"><span class="l">Б.</span>Алфавитный (расчёт по параметрам)</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">В.</span>Вероятностный</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">Г.</span>Ни один из них</button>
+        <div class="zexpl"><p class="head">Пояснение</p><p>Объём графики считают по параметрам пикселей и глубины цвета — это расчётный (алфавитный) подход.</p></div>
+      </div>
+
+      <div class="qz"><span class="ztype">Числовой ответ</span>
+        <p class="zq">Вопрос 5. Файл 8 Мбайт сжали на 75%. Каков объём архива в Мбайтах? (число)</p>
+        <div class="znum"><input type="text" id="qzNum2"placeholder="Мбайт"><button class="zbtn" onclick="qzNumAnswer(2,2)">Проверить</button></div>
+        <div class="zexpl"><p class="head">Пояснение</p><p>Осталось 25%: 8 × 0,25 = 2 Мбайта.</p></div>
+      </div>
+
+      <div class="qz"><span class="ztype">Верно или неверно</span>
+        <p class="zq">Вопрос 6. Формат JPEG, как правило, почти не уменьшается при архивации.</p>
+        <button class="zopt" data-ok="true" onclick="qzSingle(this)"><span class="l">А.</span>Верно</button>
+        <button class="zopt" data-ok="false" onclick="qzSingle(this)"><span class="l">Б.</span>Неверно</button>
+        <div class="zexpl"><p class="head">Пояснение</p><p>JPEG уже сжат, поэтому дополнительное архивирование почти не меняет объём.</p></div>
+      </div>
+
+      <p class="zscore" id="qzScore"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.deck .slide'));
+  var cur = 0;
+  var prevBtn = document.getElementById('prev');
+  var nextBtn = document.getElementById('next');
+  var counter = document.getElementById('counter');
+  var dotsBox = document.getElementById('dots');
+
+  function render(){
+    slides.forEach(function(s, i){ s.classList.toggle('active', i === cur); });
+    prevBtn.disabled = (cur === 0);
+    nextBtn.disabled = (cur === slides.length - 1);
+    counter.textContent = (cur + 1) + ' / ' + slides.length;
+    document.getElementById('pfill').style.width = ((cur + 1) / slides.length * 100) + '%';
+    buildDots();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  function buildDots(){
+    dotsBox.innerHTML = '';
+    for (var i = 0; i < slides.length; i++){
+      var d = document.createElement('button');
+      d.className = 'dot' + (i === cur ? ' active' : '');
+      d.title = 'Слайд ' + (i+1);
+      (function(idx){ d.addEventListener('click', function(){ go(idx); }); })(i);
+      dotsBox.appendChild(d);
+    }
+  }
+  function go(idx){
+    if (idx < 0 || idx >= slides.length) return;
+    cur = idx; render();
+  }
+  prevBtn.addEventListener('click', function(){ go(cur - 1); });
+  nextBtn.addEventListener('click', function(){ go(cur + 1); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') go(cur + 1);
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(cur - 1);
+  });
+
+  var overlay = document.getElementById('modalOverlay');
+  document.getElementById('openModal').addEventListener('click', function(){ overlay.classList.add('show'); });
+  document.getElementById('modalClose').addEventListener('click', function(){ overlay.classList.remove('show'); });
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.classList.remove('show'); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') overlay.classList.remove('show'); });
+
+  /* Quiz */
+  var qzTotal = 6, qzScore = 0;
+  function qzSingle(btn){
+    var qz = btn.closest('.qz');
+    if (qz.classList.contains('done')) return;
+    qz.classList.add('done');
+    var ok = btn.getAttribute('data-ok') === 'true';
+    var opts = qz.querySelectorAll('.zopt');
+    opts.forEach(function(o){ o.disabled = true; });
+    var expl = qz.querySelector('.zexpl');
+    if (ok){ qzScore++; expl.classList.add('ok'); expl.querySelector('.head').textContent = 'Верно. Ответ выбран правильно.'; }
+    else { expl.classList.add('bad'); expl.querySelector('.head').textContent = 'Неверно. Правильный ответ подсвечен.'; opts.forEach(function(o){ if(o.getAttribute('data-ok')==='true') o.classList.add('right'); }); }
+    expl.classList.add('show'); updateQzScore();
+  }
+  function qzNumAnswer(id, correct){
+    var input = document.getElementById('qzNum' + id);
+    var qz = input.closest('.qz');
+    if (qz.classList.contains('done')) return;
+    var val = parseFloat(input.value.replace(/\s/g,'').replace(',','.'));
+    if (isNaN(val)) return;
+    qz.classList.add('done');
+    var expl = qz.querySelector('.zexpl');
+    if (Math.abs(val - correct) < 0.01){ qzScore++; expl.classList.add('ok'); expl.querySelector('.head').textContent = 'Верно. Расчёт выполнен правильно.'; }
+    else { expl.classList.add('bad'); expl.querySelector('.head').textContent = 'Неверно. Ознакомьтесь с решением.'; }
+    expl.classList.add('show'); updateQzScore();
+  }
+  function updateQzScore(){
+    var el = document.getElementById('qzScore');
+    if (el) el.textContent = 'Результат самопроверки: ' + qzScore + ' из ' + qzTotal + '.';
+  }
+
+  /* Unit ordering interactive: pool -> board */
+  var unitOrder = ['бит','байт','Кбайт','Мбайт','Гбайт'];
+  var unitPool = document.getElementById('unitPool');
+  var unitBuilt = document.getElementById('unitBuilt');
+  var unitMsg = document.getElementById('unitMsg');
+  function mkUnitChip(text, intoBuilt){
+    var chip = document.createElement('button'); chip.className = 'card seq-chip'; chip.textContent = text;
+    chip.addEventListener('click', function(){
+      var parent = chip.parentElement;
+      if (parent === unitPool){ unitBuilt.appendChild(chip); }
+      else { unitPool.appendChild(chip); }
+    });
+    (intoBuilt ? unitBuilt : unitPool).appendChild(chip);
+  }
+  function renderUnits(){
+    unitPool.innerHTML = ''; unitBuilt.innerHTML = ''; unitMsg.textContent = '';
+    var shuffled = unitOrder.slice().sort(function(){ return Math.random() - 0.5; });
+    shuffled.forEach(function(s){ mkUnitChip(s, false); });
+  }
+  document.getElementById('unitCheck').addEventListener('click', function(){
+    var built = Array.prototype.slice.call(unitBuilt.children).map(function(c){ return c.textContent; });
+    if (built.length === 0){ unitMsg.textContent = 'Сначала перенесите единицы в поле для сборки.'; return; }
+    var ok = built.length === unitOrder.length && built.every(function(v,i){ return v === unitOrder[i]; });
+    unitMsg.textContent = ok ? 'Верно! Порядок: ' + built.join(' → ') : 'Пока неверно. Правильный порядок: бит → байт → Кбайт → Мбайт → Гбайт.';
+  });
+  document.getElementById('unitReset').addEventListener('click', renderUnits);
+  renderUnits();
+
+  /* Slide quz убрано — тестовые слайды удалены */
+
+  render();
+</script>
+</body>
+</html>
